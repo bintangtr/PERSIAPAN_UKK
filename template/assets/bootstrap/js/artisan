@@ -1,0 +1,1258 @@
+#!/usr/bin/env php
+<?php
+
+define('LARAVEL_START', microtime(true));
+
+/*
+|--------------------------------------------------------------------------
+| Register The Auto Loader
+|--------------------------------------------------------------------------
+|
+| Composer provides a convenient, automatically generated class loader
+| for our application. We just need to utilize it! We'll require it
+| into the script here so that we do not have to worry about the
+| loading of any of our classes manually. It's great to relax.
+|
+*/
+
+require __DIR__.'/vendor/autoload.php';
+
+$app = require_once __DIR__.'/bootstrap/app.php';
+
+/*
+|--------------------------------------------------------------------------
+| Run The Artisan Application
+|--------------------------------------------------------------------------
+|
+| When we run the console application, the current CLI command will be
+| executed in this console and the response sent back to a terminal
+| or another output device for the developers. Here goes nothing!
+|
+*/
+
+$kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
+
+$status = $kernel->handle(
+    $input = new Symfony\Component\Console\Input\ArgvInput,
+    new Symfony\Component\Console\Output\ConsoleOutput
+);
+
+/*
+|--------------------------------------------------------------------------
+| Shutdown The Application
+|--------------------------------------------------------------------------
+|
+| Once Artisan has finished running, we will fire off the shutdown events
+| so that any final work may be done by the application before we shut
+| down the process. This is the last thing to happen to the request.
+|
+*/
+
+$kernel->terminate($input, $status);
+
+exit($status);
+
+
+
+
+// ==== Controller ====
+
+
+// AuthController
+
+// class AuthController extends Controller
+// {
+//     // =Halaman LOGIN=
+//     public function v_login()
+//     {
+//         return view("layouts.login");
+//     }
+//     // =============
+
+//     // Logic LOGIN
+//     public function login(Request $request)
+//     {
+//         $data = [
+//             "email" => $request->email,
+//             "password" => $request->password
+//         ];
+
+//         if (Auth::attempt($data)) {
+//             return redirect('/');
+//         } else {
+//             return redirect()->back();
+//         }
+//     }
+//     // =============
+
+//     // Halaman Register
+//     public function v_register()
+//     {
+//         return view("layouts.register");
+//     }
+//     // =============
+
+//     // Logic Register
+//     public function register(Request $request)
+//     {
+//         $request->validate([
+
+//             'username' => 'required',
+//             'email' => 'required|email',
+//             'nama_lengkap' => 'required',
+//             'alamat' => 'required',
+//             'password' => 'required|min:6'
+//         ]);
+
+//         $user = new User();
+//         $user->username = $request->username;
+//         $user->email = $request->email;
+//         $user->nama_lengkap = $request->nama_lengkap;
+//         $user->alamat = $request->alamat;
+//         $user->password = bcrypt($request->password);
+//         $user->save();
+//         return redirect('/masuk');
+//     }
+//     // =============
+//     // LogOut
+//     public function logout()
+//     {
+//         Auth::logout();
+//         return redirect('/');
+//     }
+// }
+
+// ===============
+
+
+// HomeController
+
+// class HomeController extends Controller
+// {
+//     public $photos;
+
+//     public function home()
+//     {
+//         $photos = Foto::all();
+//         return view('page.home', compact('photos'));
+//     }
+
+// }
+
+// ================
+
+
+// UploadController
+
+// class UploadController extends Controller
+// {
+//     public function upload()
+//     {
+//         $albums = Album::all();
+//         return view("page.upload.upload", compact('albums'));
+//     }
+//     public function proses_upload(Request $request)
+//     {
+//         $request->validate([
+//             'lokasi_file' => 'required|image|mimes:jpeg,png,jpg,gif|max:2080',
+//             'judul_foto' => 'required|string|max:255',
+//             'deskripsi_foto' => 'nullable|string',
+//             'album_id' => 'nullable', // Validasi untuk memastikan album_id yang dipilih valid
+//         ]);
+
+//         // Simpan file ke storage
+//         $filePath = $request->file('lokasi_file')->store('photos', 'public');
+
+//         Foto::create([
+//             'user_id' => Auth::id(),
+//             'judul_foto' => $request->judul_foto,
+//             'deskripsi_foto' => $request->deskripsi_foto,
+//             'lokasi_file' => $filePath, // Kolom lokasi_file untuk menyimpan path file foto
+//             'tanggal_unggah' => now(),
+//             'album_id' => $request->album_id, // Menambahkan album_id dari formulir
+//         ]);
+
+//         return redirect()->back()->with('success', 'Foto berhasil diunggah.');
+//     }
+// }
+
+// ================
+
+
+// PreviewController
+
+// class PreviewController extends Controller
+// {
+//     public function preview($id)
+//     {
+//         $data = Foto::with('user', 'comments')->find($id);
+//         $userId = $data->user->username;
+//         $isLiked = $data->likes->contains('user_id', auth()->id());
+//         $like = Like::where('foto_id', $id)->get();
+//         $albums = Album::all();
+
+//         return view('page.upload.detail.preview', compact('data', 'userId', 'isLiked', 'like', 'albums'));
+//     }
+
+//     public function toggleLike(Request $request, $foto_id)
+//     {
+//         $like = Like::where('foto_id', $foto_id)->where('user_id', auth()->id())->first();
+
+//         if ($like) {
+//             $like->delete();
+//             return redirect("/preview/" . $foto_id);
+//         } else {
+//             Like::create([
+//                 'foto_id' => $foto_id,
+//                 'user_id' => auth()->id(),
+//                 'tanggal_like' => now(),
+//             ]);
+//             return redirect("/preview/" . $foto_id);
+//         }
+//     }
+
+//     public function storeKomentar(Request $request, $id)
+//     {
+//         $request->validate([
+//             'isi_komentar' => 'required|string|max:255',
+//         ]);
+
+//         Komentar::create([
+//             'foto_id' => $id,
+//             'user_id' => auth()->id(),
+//             'isi_komentar' => $request->isi_komentar,
+//             'tanggal_komentar' => now(),
+//         ]);
+
+//         return redirect()->back()->with('success', 'Komentar berhasil ditambahkan');
+//     }
+
+//     public function delete(Foto $data)
+//     {
+//         if ($data->user_id == auth()->id()) {
+//             $data->delete();
+//             return redirect('/')->with('success', 'Foto berhasil dihapus');
+//         } else {
+//             return redirect('/')->with('error', 'Anda tidak memiliki izin untuk menghapus foto ini');
+//         }
+//     }
+//     public function update(Request $request, $id)
+//     {
+//         $request->validate([
+//             'judul_foto' => 'required|string|max:255',
+//             'deskripsi_foto' => 'nullable|string|max:255',
+//             'foto' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2080', // Validasi untuk unggahan foto
+//             'album_id' => 'nullable',
+//             // Tambahkan validasi lainnya sesuai kebutuhan
+//         ]);
+
+//         $foto = Foto::findOrFail($id);
+
+//         // Proses update atribut foto
+//         $foto->judul_foto = $request->judul_foto;
+//         $foto->deskripsi_foto = $request->deskripsi_foto;
+//         $foto->album_id = $request->album_id;
+//         // Update atribut lainnya
+
+//         // Periksa apakah ada unggahan foto baru
+//         if ($request->hasFile('foto')) {
+//             // Hapus foto lama jika ada
+//             if ($foto->lokasi_file) {
+//                 Storage::delete($foto->lokasi_file);
+//             }
+//             // Simpan foto baru
+//             $foto->lokasi_file = $request->file('foto')->store('photos', 'public');
+//         }
+
+//         $foto->save();
+
+//         return redirect()->route('page.upload.detail.preview', $id)->with('success', 'Foto berhasil diperbarui');
+//     }
+// }
+
+// =============
+
+
+// AlbumController
+
+// class AlbumController extends Controller
+// {
+//     public function album()
+//     {
+//         $albums = Album::with('photos')->get();
+//         return view('page.album', compact('albums'));
+//     }
+
+//     public function preview(Album $album)
+//     {
+//         return view('page.preview_album', compact('album'));
+//     }
+
+//     public function store(Request $request)
+//     {
+//         // Validasi input
+//         $request->validate([
+//             'nama_album' => 'required|string|max:255',
+//             'deskripsi' => 'nullable|string',
+//             // Tambahkan validasi lainnya sesuai kebutuhan
+//         ]);
+
+//         // Buat album baru
+//         Album::create([
+//             'nama_album' => $request->nama_album,
+//             'deskripsi' => $request->deskripsi,
+//             'tanggal_dibuat' => now(),
+//             'user_id' => auth()->id(), // Ambil ID pengguna yang saat ini masuk
+//         ]);
+
+//         return redirect()->route('page.album')->with('success', 'Album berhasil dibuat');
+//     }
+
+//     public function update(Request $request, Album $album)
+//     {
+//         $request->validate([
+//             'nama_album' => 'required|string|max:255',
+//             'deskripsi' => 'nullable|string',
+//             // tambahkan validasi lainnya sesuai kebutuhan
+//         ]);
+
+//         $album->update([
+//             'nama_album' => $request->nama_album,
+//             'deskripsi' => $request->deskripsi,
+//             // tambahkan kolom lainnya sesuai kebutuhan
+//         ]);
+
+//         return redirect()->back()->with('success', 'Album berhasil diperbarui.');
+//     }
+
+//     public function destroy(Album $album)
+//     {
+//         $album->delete();
+
+//         return redirect()->route('page.album')->with('success', 'Album berhasil dihapus.');
+//     }
+// }
+
+// =============
+
+
+
+
+// ==== Model ====
+
+
+// Model User
+
+// <?php
+
+// namespace App\Models;
+
+// // use Illuminate\Contracts\Auth\MustVerifyEmail;
+// use Illuminate\Database\Eloquent\Factories\HasFactory;
+// use Illuminate\Foundation\Auth\User as Authenticatable;
+// use Illuminate\Notifications\Notifiable;
+// use Laravel\Sanctum\HasApiTokens;
+
+// class User extends Authenticatable
+// {
+//     use HasApiTokens, HasFactory, Notifiable;
+
+//     /**
+//      * The attributes that are mass assignable.
+//      *
+//      * @var array<int, string>
+//      */
+//     protected $fillable = [
+//         'nama_lengkap',
+//         'email',
+//         'password',
+//         'username',
+//         'alamat',
+//     ];
+
+//     protected $table = 'users';
+
+//     /**
+//      * The attributes that should be hidden for serialization.
+//      *
+//      * @var array<int, string>
+//      */
+//     protected $hidden = [
+//         'password',
+//         'remember_token',
+//     ];
+
+//     /**
+//      * The attributes that should be cast.
+//      *
+//      * @var array<string, string>
+//      */
+//     protected $casts = [
+//         'email_verified_at' => 'datetime',
+//         'password' => 'hashed',
+//     ];
+//     public function upload()
+//     {
+//         return $this->hasMany(Foto::class);
+//     }
+// }
+
+// ==========
+
+
+// Model Foto
+
+// class Foto extends Model
+// {
+//     use HasFactory;
+
+//     protected $fillable = [
+//         'foto_id',
+//         'user_id',
+//         'judul_foto',
+//         'deskripsi_foto',
+//         'tanggal_unggah',
+//         'lokasi_file',
+//         'album_id',
+//     ];
+
+//     protected $primaryKey = 'foto_id';
+
+//     protected $table = 'foto';
+
+//     public function user(){
+//         return $this->belongsTo(User::class, 'user_id');
+//     }
+
+//     public function comments()
+//     {
+//         return $this->hasMany(Komentar::class, 'foto_id');
+//     }
+
+//     public function likes()
+//     {
+//         return $this->hasMany(Like::class, 'foto_id');
+//     }
+//     public function album()
+//     {
+//         return $this->belongsTo(Album::class, 'album_id');
+//     }
+// }
+
+// ==========
+
+
+// Model Komentar
+
+// class Komentar extends Model
+// {
+//     use HasFactory;
+
+//     protected $fillable = [
+//         'komentar_id',
+//         'foto_id',
+//         'user_id',
+//         'isi_komentar',
+//         'tanggal_komentar',
+//     ];
+
+//     protected $primaryKey = 'komentar_id';
+
+//     protected $table = 'komentarfoto';
+
+//     public function user()
+//     {
+//         return $this->belongsTo(User::class, 'user_id');
+//     }
+//     public function foto()
+//     {
+//         return $this->belongsTo(Foto::class, 'foto_id');
+//     }
+// }
+
+// ==========
+
+
+// Model Like
+
+// class Like extends Model
+// {
+//     use HasFactory;
+
+//     protected $fillable = [
+//         'like_id',
+//         'foto_id',
+//         'user_id',
+//         'tanggal_like',
+//     ];
+
+//     protected $primaryKey = 'like_id';
+
+//     protected $table = 'likefoto';
+
+//     public function user()
+//     {
+//         return $this->belongsTo(User::class, 'foto_id');
+//     }
+//     public function photo()
+//     {
+//         return $this->belongsTo(Foto::class, 'user_id');
+//     }
+// }
+
+// ==========
+
+
+// Model Album
+
+// class Album extends Model
+// {
+//     use HasFactory;
+
+//     protected $fillable = [
+//         'album_id',
+//         'nama_album',
+//         'deskripsi',
+//         'tanggal_dibuat',
+//         'user_id',
+//     ];
+
+//     protected $primaryKey = 'album_id';
+
+//     protected $table = 'album';
+
+//     public function photos()
+//     {
+//         return $this->hasMany(Foto::class, 'album_id');
+//     }
+// }
+
+// ==========
+
+
+
+
+// ==== Migration ====
+
+// Migration User
+
+// public function up(): void
+//     {
+//         Schema::create('users', function (Blueprint $table) {
+//             $table->id();
+//             $table->string('username', 255);
+//             $table->string('password', 255);
+//             $table->string('email', 255)->unique();
+//             $table->string('nama_lengkap', 255);
+//             $table->text('alamat')->nullable();
+//             $table->rememberToken();
+//             $table->timestamps();
+//         });
+//     }
+
+// ==============
+
+
+// Migration Foto
+
+// public function up(): void
+//     {
+//         Schema::create('foto', function (Blueprint $table) {
+//             $table->bigIncrements('foto_id');
+//             $table->unsignedBigInteger('user_id');
+//             $table->string('judul_foto', 255);
+//             $table->text('deskripsi_foto')->nullable();
+//             $table->unsignedBigInteger('album_id')->nullable();
+//             $table->string('lokasi_file', 255);
+//             $table->date('tanggal_unggah');
+//             $table->timestamps();
+//         });
+//     }
+
+// ==============
+
+
+// Migration likefoto
+
+// public function up(): void
+//     {
+//         Schema::create('likefoto', function (Blueprint $table) {
+//             $table->bigIncrements('like_id');
+//             $table->unsignedBigInteger('foto_id');
+//             $table->unsignedBigInteger('user_id');
+//             $table->date('tanggal_like');
+//             $table->timestamps();
+//         });
+//     }
+
+// ==============
+
+
+// Migration komentarfoto
+
+// public function up(): void
+//     {
+//         Schema::create('komentarfoto', function (Blueprint $table) {
+//             $table->bigIncrements('komentar_id');
+//             $table->unsignedBigInteger('foto_id');
+//             $table->unsignedBigInteger('user_id');
+//             $table->text('isi_komentar')->nullable();
+//             $table->date('tanggal_komentar');
+//             $table->timestamps();
+//         });
+//     }
+
+// ==============
+
+
+// Migration album
+
+// public function up(): void
+//     {
+//         Schema::create('album', function (Blueprint $table) {
+//             $table->bigIncrements('album_id');
+//             $table->string('nama_album', 255);
+//             $table->text('deskripsi')->nullable();
+//             $table->date('tanggal_dibuat');
+//             $table->unsignedBigInteger('user_id');
+//             $table->timestamps();
+//         });
+//     }
+
+// ==============
+
+
+
+
+// ==== Routes ====
+
+
+// //Login & Register
+// Route::get('/masuk', [AuthController::class, 'v_login'])->name('login');
+// Route::post('/masuk', [AuthController::class, 'login']);
+// Route::get('/daftar', [AuthController::class, 'v_register']);
+// Route::post('/daftar', [AuthController::class, 'register']);
+// Route::get('/keluar', [AuthController::class, 'logout']);
+
+// //Home
+// Route::get('/', [HomeController::class, 'home']);
+
+// //Auth
+// Route::middleware('auth')->group(function () {
+
+//     //Upload
+//     Route::get('/upload', [UploadController::class, 'upload']);
+//     Route::post('/proses_upload', [UploadController::class, 'proses_upload']);
+
+//     //Album
+//     Route::get('/album', [AlbumController::class, 'album'])->name('page.album');
+//     Route::post('/album/store', [AlbumController::class, 'store'])->name('album.store');
+//     Route::put('/album/{album}', [AlbumController::class, 'update'])->name('album.update');
+//     Route::get('/album/{album}', [AlbumController::class, 'preview'])->name('page.album.preview_album');
+//     Route::delete('/album/{album}', [AlbumController::class, 'destroy'])->name('album.destroy');
+
+//     //Preview
+//     Route::get('/preview/{foto_id}', [PreviewController::class, 'preview'])->name('page.upload.detail.preview');
+//     Route::put('/preview/{id}/update', [PreviewController::class, 'update'])->name('page.upload.detail.update');
+//     Route::post('/preview/{foto_id}/like', [PreviewController::class, 'toggleLike'])->name('like.toggle');
+//     Route::post('/preview/{id}/comment', [PreviewController::class, 'storeKomentar'])->name('comment.add');
+//     Route::delete('/preview/{data}/delete', [PreviewController::class, 'delete'])->name('preview.delete');
+// });
+
+
+// ===============
+
+
+
+
+// ==== Langkah2 ====
+
+// Buatlah 3 Folder dalam 'views'
+
+// -components :
+// navbars.blade.php
+
+// -layouts :
+// app.blade.php
+// login.blade.php
+// register.blade.php
+
+// - page :
+// home.blade.php
+// album.blade.php
+// preview_album.blade.php
+// Dalam 'page' 1 Folder buat folder "upload" untuk 'upload.blade.php'.
+// Dalam 'upload' 1 Folder buat folder "detail" untuk 'preview.blade.php'.
+
+// =================
+
+
+
+
+// ==== [Folder layouts] Hal App, Login dan Register ====
+
+
+// Halaman Login
+
+// <!DOCTYPE html>
+// <html lang="en">
+
+// <head>
+//     <meta charset="UTF-8">
+//     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+//     <meta http-equiv="X-UA-Compatible" content="ie=edge">
+//     @vite(['resources/css/app.css', 'resources/js/app.js'])
+//     <title>Login | GoodPhotos</title>
+// </head>
+
+// <link href="{{ asset('assets/bootstrap/css/bootstrap.min.css') }}" rel="stylesheet">
+
+// <body class="bg-light">
+//     <div class="container">
+//         <div class="row justify-content-center">
+//             <div class="col-md-4 mt-5">
+//                 <div class="card shadow-lg rounded">
+//                     <div class="card-header">
+//                         <h4 class="text-center">GoodPhotos</h4>
+//                     </div>
+//                     <div class="card-body">
+//                         <h5 class="text-center">Login</h5>
+//                         <form method="POST" action="/masuk">
+//                             @csrf
+//                             <div class="mb-2">
+//                                 <label class="form-label">Email</label>
+//                                 <input type="email" name="email" class="form-control" placeholder="Masukkan Email" required>
+//                             </div>
+//                             <div class="mb-2">
+//                                 <label class="form-label">Password</label>
+//                                 <input type="password" name="password" class="form-control" placeholder="Masukkan Password" required>
+//                             </div>
+//                             <br>
+//                             <div class="mb-2">
+//                                 <label class="form-label">Belum punya akun? Buat lah dulu di <a href="/daftar">register</a> </label>
+//                             </div>
+//                             <div class="mt-3 mb-3 text-center">
+//                                 <a href="/" class="btn btn-secondary">Kembali</a>
+//                                 <button type="submit" class="btn btn-primary">Login</button>
+//                             </div>
+//                         </form>
+//                     </div>
+//                 </div>
+//             </div>
+//         </div>
+//     </div>
+// </body>
+
+
+// <script src="{{ asset('assets/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
+
+// </html>
+
+// =====
+
+
+// Halaman Register
+
+// <!DOCTYPE html>
+// <html lang="en">
+
+// <head>
+//     <meta charset="UTF-8">
+//     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+//     <meta http-equiv="X-UA-Compatible" content="ie=edge">
+//     @vite(['resources/css/app.css', 'resources/js/app.js'])
+//     <title>Register | GoodPhotos</title>
+// </head>
+
+// <link href="{{ asset('assets/bootstrap/css/bootstrap.min.css') }}" rel="stylesheet">
+
+// <body class="bg-light">
+//     <div class="container">
+//         <div class="row justify-content-center">
+//             <div class="col-md-4 mt-5">
+//                 <div class="card shadow-lg rounded">
+//                     <div class="card-header">
+//                         <h4 class="text-center">GoodPhotos</h4>
+//                     </div>
+//                     <div class="card-body">
+//                         <h5 class="text-center">Register</h5>
+//                         <form method="POST" action="/daftar">
+//                             @csrf
+//                             <div class="mb-2">
+//                                 <label class="form-label">Username</label>
+//                                 <input type="text" name="username" class="form-control" placeholder="Masukkan Username" required>
+//                             </div>
+//                             <div class="mb-2">
+//                                 <label class="form-label">Email</label>
+//                                 <input type="email" name="email" class="form-control" placeholder="Masukkan Username" required>
+//                             </div>
+//                             <div class="mb-2">
+//                                 <label class="form-label">Password</label>
+//                                 <input type="password" name="password" class="form-control" placeholder="Masukkan Password" required>
+//                             </div>
+//                             <div class="mb-2">
+//                                 <label class="form-label">Nama Lengkap</label>
+//                                 <input type="text" name="nama_lengkap" class="form-control" placeholder="Masukkan Nama" required>
+//                             </div>
+//                             <div class="mb-2">
+//                                 <label class="form-label">Alamat</label>
+//                                 <input type="text" name="alamat" class="form-control" placeholder="Masukkan Alamat" required>
+//                             </div>
+//                             <br>
+//                             <div class="mb-2">
+//                                 <label class="form-label">Merasa sudah punya akun? Masuk lah ke <a href="/masuk">Login</a> </label>
+//                             </div>
+//                             <div class="mb-3 mt-3 text-center">
+//                                 <a href="/" class="btn btn-secondary">Kembali</a>
+//                                 <button class="btn btn-primary" type="submit">Register</button>
+//                             </div>
+//                         </form>
+//                     </div>
+//                 </div>
+//             </div>
+//         </div>
+//     </div>
+// </body>
+
+
+// <script src="{{ asset('assets/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
+
+// </html>
+
+
+// =================
+
+
+
+
+// [Folder 'page'] home, album, preview_album
+
+// Halaman home
+
+// @extends('layouts.app')
+// @section('title', 'Beranda')
+// @section('content')
+//     <link rel="stylesheet" href="{{ asset('assets/bootstrap/grid_photos.css') }}">
+
+// <div class="m-4">
+//     <div class="row">
+//         <div class="photo-gallery">
+//             @foreach ($photos as $photo)
+//                 <a href="{{ route('page.upload.detail.preview', $photo->foto_id)}}">
+//                     <div class="photo">
+//                         <img src="{{ asset('storage/' . $photo->lokasi_file) }}" alt="{{ $photo->judul_foto }}">
+//                         <div class="overlay">
+//                             <h4>{{ $photo->judul_foto }}</h4>
+//                         </div>
+//                     </div>
+//                 </a>
+//             @endforeach
+//         </div>
+//     </div>
+// </div>
+
+// @endsection
+
+// =========
+
+
+// Halaman album
+
+// @extends('layouts.app')
+// @section('title', 'Album')
+// @section('content')
+//     <div>
+//         <div class="text-end">
+//             <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#albumModal">
+//                 Buat Album
+//             </button>
+//         </div>
+//     </div>
+
+//     <!-- Modal -->
+//     <div class="modal fade" id="albumModal" tabindex="-1" aria-labelledby="albumModalLabel" aria-hidden="true">
+//         <div class="modal-dialog">
+//             <div class="modal-content">
+//                 <div class="modal-header">
+//                     <h1 class="modal-title fs-5" id="albumModalLabel">Buat Album</h1>
+//                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+//                 </div>
+//                 <form action="{{ route('album.store') }}" method="POST">
+//                     @csrf
+//                     <div class="modal-body">
+//                         <div class="mb-3">
+//                             <label for="nama_album" class="form-label">Nama Album</label>
+//                             <input type="text" class="form-control" id="nama_album" name="nama_album" required>
+//                         </div>
+//                         <div class="mb-3">
+//                             <label for="deskripsi" class="form-label">Deskripsi</label>
+//                             <textarea class="form-control" id="deskripsi" name="deskripsi" rows="3"></textarea>
+//                         </div>
+//                     </div>
+//                     <div class="modal-footer">
+//                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+//                         <button type="submit" class="btn btn-primary">Simpan</button>
+//                     </div>
+//                 </form>
+//             </div>
+//         </div>
+//     </div>
+
+//     <div class="container">
+//         <div class="row">
+//             @foreach ($albums as $album)
+//                 <div class="col-md-4">
+//                     <div class="card mb-4 shadow-sm">
+//                         <div class="card-body">
+//                             <h5 class="card-title">{{ $album->nama_album }}</h5>
+//                             <p class="card-text">{{ $album->deskripsi }}</p>
+//                             <a href="{{ route('page.album.preview_album', $album) }}" class="btn btn-primary">Preview Album</a>
+//                         </div>
+//                     </div>
+//                 </div>
+//             @endforeach
+//         </div>
+//     </div>
+
+// @endsection
+
+// =========
+
+
+// Halaman preview_album
+
+// @extends('layouts.app')
+// @section('title', 'Preview Album')
+// @section('content')
+//     <div>
+//         <div class="container">
+//             <div class="text-end">
+//                 <button type="button" class="btn btn-danger ms-2" data-bs-toggle="modal" data-bs-target="#deleteModal">
+//                     <i class="fa fa-pencil-square-o fa-lg" aria-hidden="true"></i> Delete
+//                 </button>
+//                 <button type="button" class="btn btn-primary ms-2" data-bs-toggle="modal" data-bs-target="#updateModal">
+//                     <i class="fa fa-pencil-square-o fa-lg" aria-hidden="true"></i> Update
+//                 </button>
+//             </div>
+//             <!-- Modal Update Album -->
+//             <div class="modal fade" id="updateModal" tabindex="-1" aria-labelledby="updateModalLabel" aria-hidden="true">
+//                 <div class="modal-dialog modal-dialog-centered">
+//                     <div class="modal-content">
+//                         <div class="modal-header">
+//                             <h5 class="modal-title" id="updateModalLabel">Update Album</h5>
+//                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+//                         </div>
+//                         <form action="{{ route('album.update', $album) }}" method="POST">
+//                             @csrf
+//                             @method('PUT')
+//                             <div class="modal-body">
+//                                 <div class="mb-3">
+//                                     <label for="nama_album" class="form-label">Nama Album</label>
+//                                     <input type="text" class="form-control" id="nama_album" name="nama_album"
+//                                         value="{{ $album->nama_album }}" required>
+//                                 </div>
+//                                 <div class="mb-3">
+//                                     <label for="deskripsi" class="form-label">Deskripsi</label>
+//                                     <textarea class="form-control" id="deskripsi" name="deskripsi" rows="3">{{ $album->deskripsi }}</textarea>
+//                                 </div>
+//                             </div>
+//                             <div class="modal-footer">
+//                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+//                                 <button type="submit" class="btn btn-primary">Simpan Perubahan</button>
+//                             </div>
+//                         </form>
+//                     </div>
+//                 </div>
+//             </div>
+
+//             <!-- Modal Delete -->
+//             <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+//                 <div class="modal-dialog">
+//                     <div class="modal-content">
+//                         <div class="modal-header">
+//                             <h5 class="modal-title" id="deleteModalLabel">Konfirmasi Hapus Album</h5>
+//                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+//                         </div>
+//                         <div class="modal-body">
+//                             Apakah Anda yakin ingin menghapus Album <b>{{ $album->nama_album }}</b>?
+//                         </div>
+//                         <div class="modal-footer">
+//                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+//                             <form action="{{ route('album.destroy', $album) }}" method="POST">
+//                                 @csrf
+//                                 @method('DELETE')
+//                                 <button type="submit" class="btn btn-danger">Hapus</button>
+//                             </form>
+//                         </div>
+//                     </div>
+//                 </div>
+//             </div>
+
+
+//             {{-- <h1>Nama Album: {{ $album->nama_album }}</h1>
+//             <p>Deskripsi: {{ $album->deskripsi }}</p> --}}
+//             @if ($album->photos->isEmpty())
+//                 <div class="text-center pt-5 mt-5">
+//                     <h2 class="fw-lighter">Belum ada foto yang ditambahkan ke album ini!</h2>
+//                 </div>
+//             @else
+//                 <div class="row">
+//                     @foreach ($album->photos as $photo)
+//                         <div class="col-md-4">
+//                             <div class="card mb-4 shadow-sm">
+//                                 <img src="{{ asset('storage/' . $photo->lokasi_file) }}" class="card-img-top"
+//                                     alt="{{ $photo->judul_foto }}">
+//                                 <div class="card-body">
+//                                     <p class="card-text"><h4 class="fw-medium">{{ $photo->judul_foto }}</h4></p>
+//                                     <div class="d-flex justify-content-between align-items-center">
+//                                     </div>
+//                                 </div>
+//                             </div>
+//                         </div>
+//                     @endforeach
+//                 </div>
+//             @endif
+//         </div>
+//     </div>
+// @endsection
+
+
+// ==========
+
+
+
+
+// [Folder 'upload'] upload.blade.php
+
+// @extends('layouts.app')
+// @section('title', 'Upload')
+// @section('content')
+
+//     <link href="{{ asset('assets/bootstrap/upload.css') }}" rel="stylesheet">
+//     <div>
+//         <div class="container mt-5 pt-5">
+//             <div class="card-body">
+//                 <form action="{{ url('/proses_upload') }}" method="post" enctype="multipart/form-data">
+//                     @csrf
+//                     <div class="row">
+//                         <div class="col">
+//                             <label for="lokasi_file" class="drop-container" id="dropcontainer">
+//                                 <span class="drop-title">Drop files here</span>
+//                                 or
+//                                 <input type="file" name="lokasi_file" id="lokasi_file" accept="image/*" required>
+//                             </label>
+//                         </div>
+//                         <div class="col">
+//                             <div class="mb-2">
+//                                 <label for="judul_foto">Judul Foto</label>
+//                                 <input type="text" name="judul_foto" id="judul_foto" class="form-control" required>
+//                             </div>
+
+//                             <div class="mb-2">
+//                                 <label>Album</label>
+//                                 <select name="album_id" class="form-select">
+//                                     <option value="-">-</option>
+//                                     @if ($albums->isEmpty())
+//                                         <option disabled selected>Belum ada album tersedia</option>
+//                                     @else
+//                                         @foreach ($albums as $album)
+//                                             <option value="{{ $album->album_id }}">{{ $album->nama_album }}</option>
+//                                         @endforeach
+//                                     @endif
+//                                 </select>
+//                             </div>
+
+//                             <div class="mb-2">
+//                                 <label for="deskripsi_foto" class="form-label">Deskripsi Foto</label>
+//                                 <textarea name="deskripsi_foto" id="deskripsi_foto" class="form-control" placeholder="Tambahkan deskripsi.."
+//                                     style="height: 100px;"></textarea>
+//                             </div>
+//                             <div class="mb-2 mt-3">
+//                                 <button type="submit" class="btn btn-outline-dark">Upload</button>
+//                             </div>
+//                         </div>
+//                     </div>
+//                 </form>
+//             </div>
+//         </div>
+//     </div>
+
+// @endsection
+
+// ==========
+
+
+
+
+// [Folder 'detail'] preview.blade.php
+
+// @extends('layouts.app')
+// @section('title', 'Preview Foto')
+// @section('content')
+
+// <div class="container text-center mt-6">
+//     <div class="row justify-content-center">
+//         <div class="col-5">
+//             <img class="card-img" src="{{ asset('storage/' . $data->lokasi_file) }}" alt="{{ $data->judul_foto }}"
+//                 style="border-radius: 23px;">
+//         </div>
+//         <div class="col-4">
+//             <div class="card">
+//                 <div class="card-body">
+//                     <div class="d-flex align-items-center">
+//                         <span class="mx-1"> </span>
+//                         <p class="fw-semibold">{{ $userId }}</p>
+//                         <span class="mx-1"> </span>
+//                         <p class="fw-normal">{{ $data->tanggal_unggah }}</p>
+//                         <span class="mx-1"> </span>
+//                         <span class="mx-3"> </span>
+//                         @if (auth()->check() && $data->user_id == auth()->user()->id)
+//                             <button type="button" class="btn btn-danger ms-2" data-bs-toggle="modal"
+//                                 data-bs-target="#deleteModal">
+//                                 <i class="fa fa-pencil-square-o fa-lg" aria-hidden="true"></i> Delete
+//                             </button>
+//                             <button type="button" class="btn btn-primary ms-2" data-bs-toggle="modal"
+//                                 data-bs-target="#updateModal">
+//                                 <i class="fa fa-pencil-square-o fa-lg" aria-hidden="true"></i> Update
+//                             </button>
+//                         @endif
+//                     </div>
+//                     <hr>
+//                     <div class="d-flex justify-content-start">
+//                         <h5>{{ $data->judul_foto }}</h5>
+//                     </div>
+//                     <div class="d-flex justify-content-start ">
+//                         <h6>{{ $data->deskripsi_foto }}</h6>
+//                     </div>
+
+//                     <hr>
+//                     <p class="fw-medium">Komentar</p>
+//                     <div class="container text-start">
+//                         <div class="d-flex justify-content-start">
+//                             <div class="comments mt-3 mb-4">
+//                                 @foreach ($data->comments as $comment)
+//                                     <div class="mb-2">
+//                                         <span class="fw-bold">{{ $comment->user->username }}</span>
+//                                         {{ $comment->isi_komentar }}
+//                                     </div>
+//                                 @endforeach
+//                             </div>
+//                         </div>
+//                     </div>
+
+//                     <div class="d-flex justify-content-start">
+//                         @if ($like)
+//                             <div style="margin-top: -4">
+//                                 {{ $like->count() }}
+//                             </div>
+//                         @else
+//                             0
+//                         @endif
+//                         <form action="{{ route('like.toggle', ['foto_id' => $data->foto_id]) }}" method="POST">
+//                             @csrf
+//                             <button type="submit" class="text-xl bg-white" style="border: none;">
+//                                 @if ($isLiked)
+//                                     <i class="fa-solid fa-heart text-danger"></i>
+//                                 @else
+//                                     <i class="fa-regular fa-heart"></i>
+//                                 @endif
+//                             </button>
+//                         </form>
+//                     </div>
+
+//                     <!-- Form untuk menambahkan komentar baru -->
+//                     <form action="{{ route('comment.add', $data->foto_id) }}" method="POST" class="mt-3">
+//                         @csrf
+//                         <div class="input-group mb-3">
+//                             <input type="text" name="isi_komentar" class="form-control"
+//                                 placeholder="Tambahkan komentar">
+//                             <button type="submit" class="btn btn-dark" id="button-addon2">Kirim</button>
+//                         </div>
+//                     </form>
+//                 </div>
+//             </div>
+//         </div>
+//     </div>
+// </div>
+
+// <!-- Modal Update -->
+// <div class="modal fade" id="updateModal" tabindex="-1" aria-labelledby="updateModalLabel" aria-hidden="true">
+//     <div class="modal-dialog">
+//         <div class="modal-content">
+//             <div class="modal-header">
+//                 <h5 class="modal-title" id="updateModalLabel">Update Foto</h5>
+//                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+//             </div>
+//             <form action="{{ route('page.upload.detail.update', $data->foto_id) }}" method="POST"
+//                 enctype="multipart/form-data">
+//                 @csrf
+//                 @method('PUT')
+//                 <div class="modal-body">
+//                     <div class="mb-3">
+//                         <label for="judul_foto" class="form-label">Judul Foto</label>
+//                         <input type="text" class="form-control" id="judul_foto" name="judul_foto"
+//                             value="{{ $data->judul_foto }}" required>
+//                     </div>
+
+//                     <div class="mb-2">
+//                         <label>Album</label>
+//                         <select name="album_id" class="form-select">
+//                             <option value="-">-</option> <!-- Tambahkan opsi "-" di sini -->
+//                             @if ($albums->isEmpty())
+//                                 <option disabled selected>Belum ada album tersedia</option>
+//                             @else
+//                                 @foreach ($albums as $album)
+//                                     <option value="{{ $album->album_id }}">{{ $album->nama_album }}</option>
+//                                 @endforeach
+//                             @endif
+//                         </select>
+//                     </div>
+
+//                     <div class="mb-3">
+//                         <label for="deskripsi_foto" class="form-label">Deskripsi Foto</label>
+//                         <textarea class="form-control" id="deskripsi_foto" name="deskripsi_foto"
+//                             rows="3">{{ $data->deskripsi_foto }}</textarea>
+//                     </div>
+//                     <div class="mb-3">
+//                         <label for="foto" class="form-label">Pilih Foto Baru</label>
+//                         <input class="form-control" type="file" id="foto" name="foto">
+//                     </div>
+//                 </div>
+//                 <div class="modal-footer">
+//                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+//                     <button type="submit" class="btn btn-primary">Simpan Perubahan</button>
+//                 </div>
+//             </form>
+//         </div>
+//     </div>
+// </div>
+
+// {{-- Modal Delete --}}
+// <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+//     <div class="modal-dialog">
+//         <div class="modal-content">
+//             <div class="modal-header">
+//                 <h5 class="modal-title" id="deleteModalLabel">Delete Foto?</h5>
+//                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+//             </div>
+//             <form action="{{ route('preview.delete', $data) }}" method="POST">
+//                 @csrf
+//                 @method('DELETE')
+//                 <div class="modal-body">
+//                     <div class="mb-3">
+//                         <p>Anda Yakin ingin menghapus fotomu berjudul <span></span><b>{{ $data->judul_foto }}</b>?</p>
+//                     </div>
+//                 <div class="modal-footer">
+//                     <button type="button" class="btn btn-success" data-bs-dismiss="modal">Tutup</button>
+//                     <button type="submit" class="btn btn-danger" data-bs-dismiss="modal">
+//                          Hapus
+//                     </button>
+//                 </div>
+//             </form>
+//         </div>
+//     </div>
+// </div>
+
+// @endsection
+
+// ==========
